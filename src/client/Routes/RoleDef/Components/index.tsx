@@ -19,8 +19,6 @@ const RoleDefComponent = () => {
     dispatch(getRoles(queries.getPublished));
   }, []);
 
-  console.log(roles);
-  
   return (
     <div>
       <ThemeContext.Consumer>

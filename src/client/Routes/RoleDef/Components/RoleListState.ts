@@ -2,7 +2,7 @@ export interface BulkActionType {
   selectedRow: Array<number | string>;
 }
 
-interface FilterType {
+export interface FilterType {
   searchKey: string;
   search: boolean;
   field: string;
@@ -44,7 +44,6 @@ export interface RoleListState {
   // OPen the edit drawer
   editMember: boolean;
   isDeletedChecked: boolean;
-  isRowHidden: boolean;
   // THis helps to implement show deleted functionality
   // It as key of the data & its value which we want to hide
   hideRow: HideRowType;

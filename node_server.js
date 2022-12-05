@@ -38,23 +38,14 @@ function fetch_fn(req, res, next) {
 function searchRoles(req, res, next) {
   try {
     {
-      console.log('searchRoles');
-      console.log('BODY >>>', req.body);
       client.search({
         body: req.body,
         index: 'roledefs'
       })
         .then((e) => {
-          // console.log(e); 
           res.json(e);
         })
         .catch((c) => {console.log(c); res.json(c)});
-      // axios.default.get(bonsai_url + "/_search?pretty", {
-      //   data: req.body,
-      //   method: 'GET',
-      // })
-      //   .then(e => res.json(e))
-      //   .catch(e => res.json(e));
     }
   } catch (err) {
     console.log(err.message);

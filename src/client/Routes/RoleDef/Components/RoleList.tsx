@@ -1,103 +1,22 @@
 import * as React from 'react';
+import { Checkbox, FlexBox, Column, Heading, Table } from 'engage-ui';
 import { themr, ThemedComponentClass } from '@friendsofreactjs/react-css-themr';
-import { classNames } from '@shopify/react-utilities/styles';
 
-import { AllowedEntityStatusColor } from 'Types/Domain';
-import { IRoleDef } from 'Types/Domain';
-
-import DrawerSpinner from '../../../Common/Components/DrawerSpinner';
-
-import {
-  Badge,
-  Button,
-  Checkbox,
-  Dropdown,
-  FlexBox,
-  Column,
-  Heading,
-  Table,
-  TextField
-} from 'engage-ui';
-
-import {
-  getAllowedMemberType,
-  getBadgeStatus,
-  getStatus
-} from '../../../Common/Utilities';
-
+import queries from 'constants/queries';
+import debounce from 'helpers/debounce';
 import { RoleListState } from './RoleListState';
 import { RoleListProp } from './RoleListProp';
-import { ROLE } from '../../../ThemeIdentifiers';
 import useAppDispatch from 'store/hooks/useAppDispatch';
 import { getRoles } from 'store/rolesSlice/rolesSlice';
-import debounce from 'helpers/debounce';
 import useAppSelector from 'store/hooks/useAppSelector';
-import queries from 'constants/queries';
+import TableControl from './TableControl';
+import { ROLE } from '../../../ThemeIdentifiers';
+import DrawerSpinner from '../../../Common/Components/DrawerSpinner';
+import nestedColumnConfig from './TableColumns';
 
 const baseTheme = require('../Styles/RoleList.scss');
 const TableStyle = require('../../../Theme/Table.scss');
 const CommonStyle = require('../../../Theme/ListTheme.scss');
-
-/*
-  label: Table header lable which will be visible
-  key: Match it with json data, this will help to get specific value from the data
-  headerValue: In case of custom component, if any value is required, here it can be stored
-  classname: any custom classname, this can be used to set width or any other style
-  style: same like class but for inline styling
-  noSort: if sorting="all" & we want to disable sorting of specifc column
-  sort: Enable sorting for specific column
-  injectBody: To inject custom component in td
-  injectHeader: To inject custom component in th
-*/
-
-const nestedColumnConfig: Array<{}> = [
-  {
-    label: 'ID',
-    key: 'id',
-    className: ''
-  },
-  {
-    label: 'Name',
-    key: 'name',
-    className: '',
-    sortBy: 'keyword',
-    style: { width: '160px' }
-  },
-  {
-    label: 'Description',
-    key: 'description',
-    noSort: true,
-    style: { width: '300px' }
-  },
-  {
-    label: 'Status',
-    key: 'entityState',
-    style: { width: '120px' },
-    sortBy: 'itemID',
-    injectBody: (value: IRoleDef) => (
-      <Badge
-        working={value.processing}
-        status={
-          AllowedEntityStatusColor[value.processing ? 8 : getBadgeStatus(value)]
-        }
-      >
-        {value.processing ? value.processing : getStatus(value)}
-      </Badge>
-    )
-  },
-  {
-    label: 'Type',
-    key: 'allowedMemberTypes',
-    style: { width: '215px' },
-    sortBy: 'itemID',
-    injectBody: (value: IRoleDef) =>
-      getAllowedMemberType(value.allowedMemberTypes)
-  }
-];
-
-/**
- * Component to display role def list & show different actions like filter, delete, individual actions
- */
 
 const RoleListComponent = ({ roleDefs, theme }: RoleListProp) => {
   const dispatch = useAppDispatch();
@@ -119,7 +38,6 @@ const RoleListComponent = ({ roleDefs, theme }: RoleListProp) => {
       field: 'name'
     },
     isDeletedChecked: false,
-    isRowHidden: false,
     hideRow: {},
     nestedChildData: []
   });
@@ -130,11 +48,8 @@ const RoleListComponent = ({ roleDefs, theme }: RoleListProp) => {
     dropdownEle,
     filterConfig,
     hideRow,
-    isDeletedChecked,
-    isRowHidden
+    isDeletedChecked
   } = state;
-
-  const sortQuery: string = '[{"id":{"order":"desc"}}]';
 
   const handleCheckboxChange = (isChecked: boolean) => {
     setState(prevState => ({
@@ -147,23 +62,6 @@ const RoleListComponent = ({ roleDefs, theme }: RoleListProp) => {
     } else {
       dispatch(getRoles(queries.getPublished));
     }
-  };
-
-  const handleRowHide = () => {
-    if (bulkAction.selectedRow.length > 1) {
-      alert('You can hide only one row')
-      return;
-    }
-
-    setState(prevState => ({
-      ...prevState,
-      hideRow: {
-        id: +bulkAction.selectedRow[0]
-      },
-      bulkAction: {
-        selectedRow: []
-      }
-    }));
   };
 
   // function needs to be called on onChange for checkBox
@@ -183,17 +81,7 @@ const RoleListComponent = ({ roleDefs, theme }: RoleListProp) => {
 
   // function needs to be called on onChange for checkBox
   const bulkActions = () => {
-    return [
-      {
-        content: (
-          <Checkbox
-            checked={isRowHidden}
-            label={'Hide'}
-            onChange={handleRowHide}
-          />
-        )
-      }
-    ];
+    return [];
   };
 
   // Callback function when any row gets selected
@@ -217,11 +105,6 @@ const RoleListComponent = ({ roleDefs, theme }: RoleListProp) => {
     }));
   };
 
-  const searchFieldStyle = classNames(
-    theme.commonLeftMargin,
-    theme.searchField
-  );
-
   const handleInputChange = async (value: string) => {
     setState(prevState => ({
       ...prevState,
@@ -244,59 +127,17 @@ const RoleListComponent = ({ roleDefs, theme }: RoleListProp) => {
             Roles
           </Heading>
 
-          <FlexBox
-            direction="Row"
-            align="Start"
-            justify="Start"
-            componentClass={theme.tableActions}
-          >
-            <div>
-              <Button
-                componentSize="large"
-                disclosure={true}
-                onClick={(event: React.FormEvent<HTMLElement>) =>
-                  toggleDropdown(event, 'bulkAction')
-                }
-                disabled={!bulkAction.selectedRow.length}
-              >
-                Bulk Actions{' '}
-                {bulkAction.selectedRow.length
-                  ? `(${bulkAction.selectedRow.length})`
-                  : ''}
-              </Button>
-
-              <Dropdown
-                dropdownItems={bulkActions()}
-                anchorEl={dropdownEle.bulkAction}
-                preferredAlignment="left"
-              />
-            </div>
-
-            <div className={searchFieldStyle}>
-              <TextField
-                label="Find a Role..."
-                value={filterConfig.searchKey}
-                onChange={debouncedChangeHandler}
-              />
-            </div>
-
-            <div className={theme.commonLeftMargin}>
-              <Button
-                disabled={actionInProgress}
-                componentSize="large"
-                icon="horizontalDots"
-                onClick={(event: React.FormEvent<HTMLElement>) =>
-                  toggleDropdown(event, 'filter')
-                }
-              />
-
-              <Dropdown
-                dropdownItems={bulkOptions()}
-                anchorEl={dropdownEle.filter}
-                preferredAlignment="right"
-              />
-            </div>
-          </FlexBox>
+          <TableControl
+            theme={theme}
+            actionInProgress={actionInProgress}
+            bulkAction={bulkAction}
+            bulkActions={bulkActions}
+            bulkOptions={bulkOptions}
+            dropdownEle={dropdownEle}
+            debouncedChangeHandler={debouncedChangeHandler}
+            filterConfig={filterConfig}
+            toggleDropdown={toggleDropdown}
+          />
 
           {status === 'pending' && (
             <div className={theme.spinnerContainer}>
